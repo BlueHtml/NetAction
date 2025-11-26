@@ -1,0 +1,27 @@
+name: Run
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+
+concurrency: ${{ github.event.client_payload.name }}
+
+jobs:
+  build:
+
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: "Setup environment variables from secrets"
+      env:
+        SECRETS_CONTEXT: ${{ toJSON(secrets) }}
+      run: |
+        echo "Setting up environment variables from GitHub secrets..."
+        echo "$SECRETS_CONTEXT" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+        echo "Environment variables configured from secrets"
+
+    - name: Run
+      run: dotnet ${{ github.event.client_payload.name }}.cs

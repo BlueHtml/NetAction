@@ -1,0 +1,31 @@
+name: WeatherNotify
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 12,23 * * *'
+
+jobs:
+  build:
+
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: "Setup environment variables from secrets"
+      env:
+        SECRETS_CONTEXT: ${{ toJSON(secrets) }}
+      run: |
+        echo "Setting up environment variables from GitHub secrets..."
+        echo "$SECRETS_CONTEXT" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+        echo "Environment variables configured from secrets"
+
+    - name: Run
+      run: |
+        cd WeatherNotify
+        dotnet project convert WeatherNotify.cs -o out
+        mv -f out/* .
+        rm -rf out
+        dotnet run
